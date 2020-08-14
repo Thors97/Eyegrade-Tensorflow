@@ -31,7 +31,7 @@ setuptools.setup(
         "eyegrade.create",
     ],
     package_data={
-        "eyegrade": ["data/*", "data/svm/*", "data/locale/*/LC_MESSAGES/eyegrade.mo"]
+        "eyegrade": ["data/*", "data/svm/*","data/tf/*", "data/locale/*/LC_MESSAGES/eyegrade.mo"]
     },
     python_requires=">=3.6",
     install_requires=requirements,

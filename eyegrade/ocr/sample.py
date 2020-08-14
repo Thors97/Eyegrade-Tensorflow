@@ -40,7 +40,7 @@ class Sample:
     @property
     def image(self):
         if self._image is None:
-            self._image = cv2.imread(self.image_filename, 0)
+            self._image = cv2.imread(self.image_filename, cv2.IMREAD_GRAYSCALE)
             if self._image is None:
                 raise ValueError("Cannot load image: {}".format(self.image_filename))
         return self._image

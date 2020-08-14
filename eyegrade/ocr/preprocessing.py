@@ -19,6 +19,112 @@
 import cv2
 import numpy as np
 import numpy.linalg as linalg
+from scipy import ndimage
+import math
+import webbrowser
+
+class TensorflowFeatureExtractor:
+    """Default feature extractor.
+
+    It assumes that images contain just one digit
+    and ignores image corners.
+
+    """
+    def __init__(self, dim=28):
+        self.dim = dim
+
+    def extract(self, sample):
+        filename = 'sample.jpg'
+        cv2.imwrite(filename, sample._image) 
+        image = self._reshape(sample)
+        #image_path =r 'C:\Users\Abraham\Pictures\NNNN\prueba.png'
+        #image_directory =r 'C:\Users\Abraham\Pictures\NNNN'
+        filename = 'image1.jpg'
+        cv2.imwrite(filename, image) 
+        image = cv2.resize(image , (self.dim, self.dim)) 
+        filename = 'image2.jpg'
+        cv2.imwrite(filename, image)
+        image = self.fitimage(image)  
+        filename = 'image3.jpg'
+        cv2.imwrite(filename, image)
+        shiftx, shifty = self.getBestShift(image)
+        shifted = self.shift(image, shiftx, shifty)
+        image = shifted
+        filename = 'image4.jpg'
+        cv2.imwrite(filename, image)
+        image = image.reshape( 28, 28, 1)
+        image = np.expand_dims(image, axis=0)
+        image = image.astype('float32')
+        image /= 255
+        return image
+
+    def getBestShift(self , sample):
+        cy, cx = ndimage.measurements.center_of_mass(sample)
+        rows, cols = sample.shape
+        shiftx = np.round(cols/2.0-cx).astype(int)
+        shifty = np.round(rows/2.0-cy).astype(int)
+        return shiftx,shifty
+
+    def shift(self , image, sx, sy):
+        rows,cols = image.shape
+        M = np.float32([[1,0,sx],[0,1,sy]])
+        shifted = cv2.warpAffine(image,M,(cols,rows))
+        return shifted
+
+    @staticmethod
+    def fitimage(image):
+        print("PREDICT DEL DIGITO 5")
+        while np.sum(image[0]) == 0:
+            image = image[1:]
+
+        while np.sum(image[:,0]) == 0:
+            image = np.delete(image,0,1)
+
+        while np.sum(image[-1]) == 0:
+            image = image[:-1]
+
+        while np.sum(image[:,-1]) == 0:
+            image = np.delete(image,-1,1)
+
+        rows,cols = image.shape
+        
+        if rows > cols:
+            factor = 20.0/rows
+            rows = 20
+            cols = int(round(cols*factor))
+            image = cv2.resize(image, (cols,rows))
+        else:
+            factor = 20.0/cols
+            cols = 20
+            rows = int(round(rows*factor))
+            image = cv2.resize(image, (cols, rows))
+
+        colsPadding = (int(math.ceil((28-cols)/2.0)),int(math.floor((28-cols)/2.0)))
+        rowsPadding = (int(math.ceil((28-rows)/2.0)),int(math.floor((28-rows)/2.0)))
+        image = np.lib.pad(image,(rowsPadding,colsPadding),'constant')
+        return image
+
+    @property
+    def features_len(self):
+        return self.dim * self.dim
+
+    @staticmethod
+    def _project_to_rectangle(sample, width, height):
+        p = sample.corners
+        corners_dst = np.array(
+            [[0, 0], [width - 1, 0], [0, height - 1], [width - 1, height - 1]],
+            dtype="float32",
+        )
+        h = cv2.findHomography(np.array(p, dtype="float32"), corners_dst)
+        image = cv2.warpPerspective(sample.image, h[0], (width, height))
+        return cv2.threshold(image, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+    @staticmethod
+    def _reshape(sample):
+        p = sample.corners
+        width = int((cv2.norm(p[0, :], p[1, :]) + cv2.norm(p[2, :], p[3, :])) / 2)
+        height = int((cv2.norm(p[0, :], p[2, :]) + cv2.norm(p[1, :], p[3, :])) / 2)
+        return TensorflowFeatureExtractor._project_to_rectangle(sample, width, height)
 
 
 class FeatureExtractor:
@@ -31,6 +137,7 @@ class FeatureExtractor:
 
     def __init__(self, dim=28):
         self.dim = dim
+
 
     def extract(self, sample):
         image = self._reshape(sample)

@@ -470,7 +470,10 @@ class ExamDetectorContext:
         self.camera_id = camera_id
         self.threshold_locked = False
         self.image_transformer = image_transformer
-        self.ocr = classifiers.DefaultDigitClassifier()
+        #Cargas los dos clasificadores. Aqui deberia cargar los clasificadores de tensorflow.
+        #self.ocr = classifiers.DefaultTensorflowDigitClassifier()
+        self.ocr = classifiers.DefaultTensorflowDigitClassifier()
+        print("Cargamos el clasificador")
         self.crosses_classifier = classifiers.DefaultCrossesClassifier()
 
     def open_camera(self, camera_id=None):

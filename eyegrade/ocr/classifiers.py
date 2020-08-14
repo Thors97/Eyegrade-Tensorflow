@@ -20,7 +20,9 @@ import os
 
 import cv2
 import numpy as np
-
+import tensorflow as tf
+import tensorflow.keras as keras
+from tensorflow.keras.models import load_model  
 from . import preprocessing
 from .. import utils
 
@@ -29,6 +31,75 @@ DEFAULT_DIG_META_FILE = "digit_classifier_metadata.txt"
 DEFAULT_CROSS_CLASS_FILE = "cross_classifier.dat.gz"
 DEFAULT_CROSS_META_FILE = "cross_classifier_metadata.json"
 DEFAULT_DIR = "svm"
+
+DEFAULT_TENSORFLOW_DIG_CLASS_FILE = "digits_classifier.h5"
+DEFAULT_TENSORFLOW_CROSS_CLASS_FILE = "cross_classifier.h5"
+DEFAULT_DIG_META_FILE = "digit_classifier_metadata.txt"
+DEFAULT_TENSORFLOW_DIR = "tf"
+
+
+class TensorflowClassifier:
+    def __init__(self, num_classes, features_extractor, load_from_file=None):
+        self.num_classes = num_classes
+        self.features_extractor = features_extractor
+        self.tf = load_model(TensorflowClassifier.resource(load_from_file))
+
+    @property
+    def features_len(self):
+        return self.features_extractor.dim
+
+    def resource(filename):
+        print("Estamos cargando el modelo en el resource.")
+        return utils.resource_path(os.path.join(DEFAULT_TENSORFLOW_DIR, filename))
+
+    def classify(self, sample):
+        #features = np.ndarray(shape=(1, self.features_len , self.features_len , 1), dtype="float32")
+        features = self.features_extractor.extract(sample)
+        prediction = self.tf.predict(features)
+        return prediction
+
+class TensorflowDigitClassifier(TensorflowClassifier):
+    def __init__(
+        self, features_extractor, load_from_file=None, confusion_matrix_from_file=None
+    ):
+        super().__init__(10, features_extractor, load_from_file=load_from_file)
+        self.confusion_matrix = self._load_confusion_matrix(confusion_matrix_from_file)
+ 
+    def classify_digit(self, sample):
+        weights = self.classify(sample)
+        digit = np.argmax(weights)
+        return (digit, weights.reshape(10,))
+
+    @staticmethod
+    def _load_confusion_matrix(filename):
+        if filename:
+            with open(TensorflowClassifier.resource(filename)) as f:
+                metadata = json.load(f)
+                matrix = np.array(metadata["confusion_matrix"], dtype=float)
+        else:
+            matrix = np.diag(np.ones(10, dtype=float))
+        return matrix
+
+
+
+class DefaultTensorflowDigitClassifier(TensorflowDigitClassifier):
+    def __init__(
+        self,
+        load_from_file=DEFAULT_TENSORFLOW_DIG_CLASS_FILE,
+        confusion_matrix_from_file=DEFAULT_DIG_META_FILE,
+    ):
+        super().__init__(
+            preprocessing.TensorflowFeatureExtractor(),
+            load_from_file=load_from_file,
+            confusion_matrix_from_file=confusion_matrix_from_file,
+        )
+
+
+
+#class TensorflowCrosseClassifier(TensorflowClassifier):
+
+
+#class DefaultCrossesClassifier(SVMCrossesClassifier):
 
 
 class SVMClassifier:
@@ -64,7 +135,6 @@ class SVMClassifier:
     def save(self, filename):
         self.svm.save(filename)
 
-    @staticmethod
     def resource(filename):
         return utils.resource_path(os.path.join(DEFAULT_DIR, filename))
 
