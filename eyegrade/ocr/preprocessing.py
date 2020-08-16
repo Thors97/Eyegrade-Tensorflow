@@ -73,7 +73,6 @@ class TensorflowFeatureExtractor:
 
     @staticmethod
     def fitimage(image):
-        print("PREDICT DEL DIGITO 5")
         while np.sum(image[0]) == 0:
             image = image[1:]
 
@@ -125,6 +124,27 @@ class TensorflowFeatureExtractor:
         width = int((cv2.norm(p[0, :], p[1, :]) + cv2.norm(p[2, :], p[3, :])) / 2)
         height = int((cv2.norm(p[0, :], p[2, :]) + cv2.norm(p[1, :], p[3, :])) / 2)
         return TensorflowFeatureExtractor._project_to_rectangle(sample, width, height)
+
+
+class TensorflowCrossesFeatureExtractor(TensorflowFeatureExtractor):
+    """Feature extractor for crosses.
+
+    """
+
+    def __init__(self, dim=28):
+        super().__init__(dim=dim)
+
+    def extract(self, sample):
+        image = self._project_to_rectangle(sample, self.dim, self.dim)
+        image = cv2.resize(image , (self.dim, self.dim)) 
+        shiftx, shifty = self.getBestShift(image)
+        shifted = self.shift(image, shiftx, shifty)
+        image = shifted
+        image = image.reshape( 28, 28, 1)
+        image = np.expand_dims(image, axis=0)
+        image = image.astype('float32')
+        image /= 255
+        return image
 
 
 class FeatureExtractor:

@@ -96,10 +96,21 @@ class DefaultTensorflowDigitClassifier(TensorflowDigitClassifier):
 
 
 
-#class TensorflowCrosseClassifier(TensorflowClassifier):
+
+class TensorflowCrossClassifier(TensorflowClassifier):
+    def __init__(self, features_extractor, load_from_file=None):
+        super().__init__(2, features_extractor, load_from_file=load_from_file)
+
+    def is_cross(self, sample):
+        decision = np.argmax(self.classify(sample))
+        return decision == 1
 
 
-#class DefaultCrossesClassifier(SVMCrossesClassifier):
+class DefaultTensorflowCrossesClassifier(TensorflowCrossClassifier):
+    def __init__(self, load_from_file=DEFAULT_TENSORFLOW_CROSS_CLASS_FILE):
+        super().__init__(
+            preprocessing.TensorflowCrossesFeatureExtractor(), load_from_file=load_from_file
+        )
 
 
 class SVMClassifier:
