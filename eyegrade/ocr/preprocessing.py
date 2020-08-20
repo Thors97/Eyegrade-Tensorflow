@@ -39,19 +39,11 @@ class TensorflowFeatureExtractor:
         image = self._reshape(sample)
         #image_path =r 'C:\Users\Abraham\Pictures\NNNN\prueba.png'
         #image_directory =r 'C:\Users\Abraham\Pictures\NNNN'
-        filename = 'image1.jpg'
-        cv2.imwrite(filename, image) 
         image = cv2.resize(image , (self.dim, self.dim)) 
-        filename = 'image2.jpg'
-        cv2.imwrite(filename, image)
         image = self.fitimage(image)  
-        filename = 'image3.jpg'
-        cv2.imwrite(filename, image)
         shiftx, shifty = self.getBestShift(image)
         shifted = self.shift(image, shiftx, shifty)
         image = shifted
-        filename = 'image4.jpg'
-        cv2.imwrite(filename, image)
         image = image.reshape( 28, 28, 1)
         image = np.expand_dims(image, axis=0)
         image = image.astype('float32')

@@ -475,6 +475,7 @@ class ExamDetectorContext:
         self.ocr = classifiers.DefaultTensorflowDigitClassifier()
         print("Cargamos el clasificador")
         self.crosses_classifier = classifiers.DefaultTensorflowCrossesClassifier()
+        #self.crosses_classifier = classifiers.DefaultCrossesClassifier()
 
     def open_camera(self, camera_id=None):
         """Initializes the last camera device used, or `camera_id`.
