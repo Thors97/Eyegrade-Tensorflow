@@ -37,8 +37,6 @@ class TensorflowFeatureExtractor:
         filename = 'sample.jpg'
         cv2.imwrite(filename, sample._image) 
         image = self._reshape(sample)
-        #image_path =r 'C:\Users\Abraham\Pictures\NNNN\prueba.png'
-        #image_directory =r 'C:\Users\Abraham\Pictures\NNNN'
         image = cv2.resize(image , (self.dim, self.dim)) 
         image = self.fitimage(image)  
         shiftx, shifty = self.getBestShift(image)
